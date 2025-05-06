@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora Científica</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .dark-mode {
+      background-color: #1a202c;
+      color: #f7fafc;
+    }
+    .dark-mode input,
+    .dark-mode button {
+      background-color: #2d3748;
+      color: white;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 dark-mode:transition-all duration-300">
+  <div class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl w-full max-w-md">
+      <div class="flex justify-between items-center mb-4">
+        <h1 class="text-2xl font-bold">Calculadora Científica</h1>
+        <button id="toggle-theme" class="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-white">Tema</button>
+      </div>
+
+      <input id="display" type="text" readonly class="w-full mb-3 p-4 text-right text-xl border rounded-lg bg-gray-100 dark:bg-gray-700 dark:text-white" />
+
+      <div class="grid grid-cols-5 gap-2 mb-4 text-sm">
+        <button class="btn">sin</button>
+        <button class="btn">cos</button>
+        <button class="btn">tan</button>
+        <button class="btn">ln</button>
+        <button class="btn">log</button>
+
+        <button class="btn">√</button>
+        <button class="btn">^</button>
+        <button class="btn">(</button>
+        <button class="btn">)</button>
+        <button class="btn" id="clear">C</button>
+
+        <button class="btn">7</button>
+        <button class="btn">8</button>
+        <button class="btn">9</button>
+        <button class="btn">/</button>
+        <button class="btn">%</button>
+
+        <button class="btn">4</button>
+        <button class="btn">5</button>
+        <button class="btn">6</button>
+        <button class="btn">*</button>
+        <button class="btn" id="copy">📋</button>
+
+        <button class="btn">1</button>
+        <button class="btn">2</button>
+        <button class="btn">3</button>
+        <button class="btn">-</button>
+        <button class="btn" id="back">⌫</button>
+
+        <button class="btn">0</button>
+        <button class="btn">.</button>
+        <button class="btn" id="equals" colspan="2">=</button>
+        <button class="btn">+</button>
+      </div>
+
+      <div class="text-sm bg-gray-50 dark:bg-gray-700 p-3 rounded max-h-40 overflow-y-auto">
+        <strong>Histórico:</strong>
+        <ul id="history-list" class="text-xs mt-2 space-y-1"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const display = document.getElementById("display");
+    const buttons = document.querySelectorAll(".btn");
+    const clear = document.getElementById("clear");
+    const equals = document.getElementById("equals");
+    const copy = document.getElementById("copy");
+    const back = document.getElementById("back");
+    const historyList = document.getElementById("history-list");
+    const toggleTheme = document.getElementById("toggle-theme");
+    const body = document.body;
+
+    // Histórico salvo no localStorage
+    const history = JSON.parse(localStorage.getItem("calcHistory")) || [];
+    history.forEach(h => addToHistory(h));
+
+    buttons.forEach(button => {
+      button.addEventListener("click", () => {
+        const value = button.textContent;
+        if (value === "√") display.value += "Math.sqrt(";
+        else if (value === "^") display.value += "**";
+        else if (value === "log") display.value += "Math.log10(";
+        else if (value === "ln") display.value += "Math.log(";
+        else if (value === "sin") display.value += "Math.sin(";
+        else if (value === "cos") display.value += "Math.cos(";
+        else if (value === "tan") display.value += "Math.tan(";
+        else if (value !== "=" && value !== "C" && value !== "⌫" && value !== "📋")
+          display.value += value;
+      });
+    });
+
+    clear.addEventListener("click", () => {
+      display.value = "";
+    });
+
+    back.addEventListener("click", () => {
+      display.value = display.value.slice(0, -1);
+    });
+
+    equals.addEventListener("click", () => {
+      try {
+        const result = Function(`return (${display.value})`)();
+        const historyEntry = `${display.value} = ${result}`;
+        display.value = result;
+        addToHistory(historyEntry);
+        history.unshift(historyEntry);
+        localStorage.setItem("calcHistory", JSON.stringify(history.slice(0, 20)));
+      } catch {
+        display.value = "Erro";
+      }
+    });
+
+    function addToHistory(entry) {
+      const li = document.createElement("li");
+      li.textContent = entry;
+      historyList.prepend(li);
+    }
+
+    copy.addEventListener("click", () => {
+      navigator.clipboard.writeText(display.value);
+    });
+
+    toggleTheme.addEventListener("click", () => {
+      body.classList.toggle("dark-mode");
+    });
+
+    // Teclado funcional
+    window.addEventListener("keydown", e => {
+      const allowed = "0123456789+-*/().%^";
+      if (allowed.includes(e.key)) display.value += e.key;
+      if (e.key === "Enter") equals.click();
+      if (e.key === "Backspace") back.click();
+    });
+  </script>
+</body>
+</html>
